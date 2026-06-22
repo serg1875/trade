@@ -9,7 +9,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0d0e10">
 <meta name="description" content="TradeOS - Centro de comando personal de trading">
-<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22TradeOS%22%2C%22short_name%22%3A%22TradeOS%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230d0e10%22%2C%22theme_color%22%3A%22%230d0e10%22%2C%22orientation%22%3A%22portrait%22%7D">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="96x96"  href="icon-96.png">
 <title>TradeOS</title>
 <style>
   :root {
@@ -2169,6 +2172,8 @@ function initApp() {
   renderDashLP();
   renderStatsPage();
   initCalendarEngine();
+  // Generate PWA icons on first run
+  setTimeout(generateAndCacheIcons, 2000);
 }
 
 function setGreeting() {
@@ -5369,6 +5374,179 @@ function showToast(msg, success=false) {
 }
 
 // ════════════════════════════════════════════
+// SERVICE WORKER + PWA REGISTRATION
+// ════════════════════════════════════════════
+(function registerSW() {
+  if (!('serviceWorker' in navigator)) return;
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js')
+      .then(function(reg) {
+        console.log('[TradeOS] SW registrado:', reg.scope);
+        STATE.swRegistration = reg;
+        // Escucha mensajes del SW
+        navigator.serviceWorker.addEventListener('message', function(e) {
+          if (!e.data) return;
+          if (e.data.type === 'ONLINE_SYNC') {
+            // SW nos avisa que hay red — reintenta cola pendiente
+            if (STATE.pendingSync && STATE.pendingSync.length > 0) {
+              window.dispatchEvent(new Event('online'));
+            }
+          }
+          if (e.data.type === 'NOTIFICATION_CLICK') {
+            // Usuario tocó una notificación — navega al tab correcto
+            var url = e.data.url || '/';
+            if (url.includes('tab=calc')) switchTab('calc');
+            else if (url.includes('tab=calendar')) switchTab('calendar');
+          }
+        });
+      })
+      .catch(function(err) { console.warn('[TradeOS] SW falló:', err); });
+  });
+})();
+
+// ════════════════════════════════════════════
+// ICON GENERATOR (genera PNGs para PWA al vuelo)
+// ════════════════════════════════════════════
+function generateAndCacheIcons() {
+  var sizes = [96, 192, 512];
+  sizes.forEach(function(size) {
+    var canvas = document.createElement('canvas');
+    canvas.width = size; canvas.height = size;
+    var ctx = canvas.getContext('2d');
+
+    // Fondo oscuro con bordes redondeados
+    var radius = size * 0.22;
+    ctx.beginPath();
+    ctx.moveTo(radius, 0);
+    ctx.lineTo(size - radius, 0);
+    ctx.quadraticCurveTo(size, 0, size, radius);
+    ctx.lineTo(size, size - radius);
+    ctx.quadraticCurveTo(size, size, size - radius, size);
+    ctx.lineTo(radius, size);
+    ctx.quadraticCurveTo(0, size, 0, size - radius);
+    ctx.lineTo(0, radius);
+    ctx.quadraticCurveTo(0, 0, radius, 0);
+    ctx.closePath();
+    ctx.fillStyle = '#0d0e10';
+    ctx.fill();
+
+    // Borde dorado sutil
+    ctx.strokeStyle = '#b8922a';
+    ctx.lineWidth = size * 0.025;
+    ctx.stroke();
+
+    // Gráfica de línea dorada (equity curve simplificada)
+    var pad = size * 0.18;
+    var pts = [
+      [pad, size*0.72],
+      [size*0.32, size*0.62],
+      [size*0.48, size*0.68],
+      [size*0.62, size*0.42],
+      [size*0.75, size*0.38],
+      [size - pad, size*0.26]
+    ];
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+    ctx.strokeStyle = '#d4aa50';
+    ctx.lineWidth = size * 0.045;
+    ctx.lineJoin = 'round';
+    ctx.lineCap  = 'round';
+    ctx.stroke();
+
+    // Punto final brillante
+    ctx.beginPath();
+    ctx.arc(pts[pts.length-1][0], pts[pts.length-1][1], size*0.055, 0, Math.PI*2);
+    ctx.fillStyle = '#d4aa50';
+    ctx.fill();
+
+    // Texto "TO" pequeño abajo
+    ctx.fillStyle = '#5a5d63';
+    ctx.font = 'bold ' + Math.round(size*0.13) + 'px -apple-system,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('TradeOS', size/2, size - size*0.1);
+
+    // Guarda como data URL en una variable global para que el SW la use
+    canvas.toBlob(function(blob) {
+      var url = URL.createObjectURL(blob);
+      // Crea un link temporal para que el navegador pueda referenciarlo
+      var link = document.createElement('link');
+      if (size === 192) {
+        link.rel = 'apple-touch-icon';
+        link.href = url;
+        document.head.appendChild(link);
+      }
+    }, 'image/png');
+  });
+}
+
+// ════════════════════════════════════════════
+// PUSH SCHEDULER — programa alertas via SW
+// ════════════════════════════════════════════
+function schedulePushAlert(title, body, delayMs, tag) {
+  if (!STATE.swRegistration) return;
+  if (Notification.permission !== 'granted') return;
+  STATE.swRegistration.active.postMessage({
+    type:  'SCHEDULE_NOTIFICATION',
+    title: title,
+    body:  body,
+    delay: delayMs,
+    tag:   tag || 'tradeos-' + Date.now()
+  });
+}
+
+// Reprograma alertas de eventos económicos via SW
+function scheduleEconomicAlerts() {
+  if (!STATE.swRegistration || Notification.permission !== 'granted') return;
+  var events = STATE.economicEvents || [];
+  var settings = STATE.alertSettings || {};
+  var now = Date.now();
+
+  events.forEach(function(ev) {
+    if (!ev || !ev.time || ev.impact !== 'high') return;
+    var evTime = new Date(ev.time).getTime();
+    if (evTime <= now) return;
+
+    // Alerta 1 hora antes
+    if (settings.oneHour) {
+      var delay1h = evTime - now - 3600000;
+      if (delay1h > 0 && delay1h < 86400000) {
+        schedulePushAlert(
+          'TradeOS — Evento en 1 hora',
+          ev.title + ' — Prepara tu análisis.',
+          delay1h,
+          'ev-1h-' + (ev.id || ev.title)
+        );
+      }
+    }
+
+    // Alerta 15 minutos antes
+    if (settings.fifteenMin) {
+      var delay15m = evTime - now - 900000;
+      if (delay15m > 0 && delay15m < 86400000) {
+        schedulePushAlert(
+          'TradeOS — Evento en 15 min' + (ev.powellAlert ? ' ⚡ POWELL' : ''),
+          ev.title + (ev.powellAlert ? ' — Alta volatilidad esperada.' : ' — Revisa posiciones abiertas.'),
+          delay15m,
+          'ev-15m-' + (ev.id || ev.title)
+        );
+      }
+    }
+
+    // Post-evento: 5 min después para buscar setup
+    var delayPost = evTime - now + 300000;
+    if (delayPost > 0 && delayPost < 86400000) {
+      schedulePushAlert(
+        'TradeOS — ' + ev.title + ' publicado',
+        'Espera la dirección confirmada antes de entrar.',
+        delayPost,
+        'ev-post-' + (ev.id || ev.title)
+      );
+    }
+  });
+}
+
+// ════════════════════════════════════════════
 // BOOT
 // ════════════════════════════════════════════
 load();
@@ -5521,12 +5699,15 @@ async function initCalendarEngine() {
   if (!STATE.calLoaded) {
     await Promise.all([loadEconomicCalendar(), loadNews()]);
     STATE.calLoaded = true;
+    // Schedule push alerts via SW after events are loaded
+    setTimeout(scheduleEconomicAlerts, 1500);
     if (STATE.calTimer) clearInterval(STATE.calTimer);
     STATE.calTimer = setInterval(async () => {
       await Promise.all([loadEconomicCalendar(), loadNews()]);
       if (STATE.activeTab === 'calendar') renderCalCurrentTab();
       renderDashEventsPreview();
       checkProtectionMode();
+      scheduleEconomicAlerts(); // re-schedule alerts on refresh
     }, 5 * 60 * 1000); // refresh every 5 min
   }
   renderCalCurrentTab();
