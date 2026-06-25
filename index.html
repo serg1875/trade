@@ -385,6 +385,46 @@
   .check-tab { flex: 1; padding: 9px; text-align: center; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--t2); border: none; background: transparent; transition: all 0.15s; }
   .check-tab.active { background: var(--bg3); color: var(--t1); }
 
+  /* ─── SCANNER MEJORAS: EDITABLE LIST + PRE-MARKET ─── */
+  .pm-banner { border-radius: var(--radius); padding: 11px 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+  .pm-banner.active   { background: #1a1a0a; border: 1px solid var(--gold); }
+  .pm-banner.preopen  { background: #0d1a0d; border: 1px solid var(--green2); }
+  .pm-banner.closed   { background: var(--bg2); border: 0.5px solid var(--border); }
+  .pm-icon { font-size: 20px; flex-shrink: 0; }
+  .pm-body .pm-title { font-size: 13px; font-weight: 700; }
+  .pm-body .pm-sub   { font-size: 11px; color: var(--t3); margin-top: 2px; line-height: 1.4; }
+  .pm-banner.active   .pm-title { color: var(--gold-text); }
+  .pm-banner.preopen  .pm-title { color: var(--green-text); }
+  .pm-banner.closed   .pm-title { color: var(--t2); }
+  .ticker-editor { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 12px; }
+  .te-header { background: var(--bg3); padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+  .te-header-left { font-size: 12px; font-weight: 700; color: var(--t2); text-transform: uppercase; letter-spacing: 0.05em; }
+  .te-header-right { font-size: 11px; color: var(--gold-text); font-weight: 600; }
+  .te-body { display: none; padding: 12px 14px; }
+  .te-body.open { display: block; }
+  .te-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; min-height: 32px; }
+  .te-tag { display: flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; background: var(--bg3); border: 0.5px solid var(--border2); color: var(--t1); }
+  .te-tag.fav  { background: var(--gold-bg); border-color: var(--gold); color: var(--gold-text); }
+  .te-tag.hist { background: #0d2019; border-color: var(--green2); color: var(--green-text); }
+  .te-tag-del { background: none; border: none; color: var(--t3); cursor: pointer; font-size: 14px; line-height: 1; padding: 0 0 0 2px; }
+  .te-tag-del:hover { color: var(--red-text); }
+  .te-add-row { display: flex; gap: 7px; }
+  .te-input { flex: 1; background: var(--bg3); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 8px 11px; color: var(--t1); font-size: 13px; font-family: var(--font); outline: none; text-transform: uppercase; }
+  .te-input:focus { border-color: var(--gold); }
+  .te-add-btn { background: var(--gold); border: none; border-radius: var(--radius-sm); padding: 8px 14px; color: #0d0e10; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .te-legend { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+  .te-leg-item { font-size: 10px; color: var(--t3); display: flex; align-items: center; gap: 4px; }
+  .te-leg-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .scan-hist-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 0.5px solid var(--border); }
+  .scan-hist-item:last-child { border-bottom: none; }
+  .shi-sym { font-size: 13px; font-weight: 700; color: var(--t1); }
+  .shi-meta { font-size: 11px; color: var(--t3); margin-top: 2px; }
+  .shi-result { font-size: 12px; font-weight: 700; }
+  .fib-score { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 8px; }
+  .fib-high { background: #0d2019; color: var(--green-text); border: 0.5px solid var(--green2); }
+  .fib-med  { background: #2a1e06; color: var(--gold-text); border: 0.5px solid var(--gold); }
+  .fib-low  { background: var(--bg3); color: var(--t3); border: 0.5px solid var(--border2); }
+
   /* ─── FASE 4: SCANNER + WYCKOFF + BACKTESTING EDUCATIVO ─── */
   .scanner-card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 13px 14px; margin-bottom: 8px; cursor: pointer; transition: border-color 0.15s; }
   .scanner-card:active { background: var(--bg3); }
@@ -1469,25 +1509,61 @@
         <!-- SCANNER SUB-TAB -->
         <div id="p4v-scanner">
           <div class="section" style="padding-top:8px">
-            <div class="coach-card" style="margin-bottom:12px">
-              <div class="coach-icon">🔍</div>
-              <div class="coach-text"><strong>Scanner de Smallcaps:</strong> Busca instrumentos con volumen inusual, precio $5-$100 y volatilidad elevada — los candidatos que mejor se adaptan a tu estrategia Fibonacci.</div>
+
+            <!-- Pre-market / session banner — auto-updates -->
+            <div id="scan-session-banner" class="pm-banner closed">
+              <div class="pm-icon" id="scan-pm-icon">🔍</div>
+              <div class="pm-body">
+                <div class="pm-title" id="scan-pm-title">Scanner de Smallcaps</div>
+                <div class="pm-sub" id="scan-pm-sub">Toca Buscar para escanear el mercado</div>
+              </div>
             </div>
+
+            <!-- Ticker editor — collapsible -->
+            <div class="ticker-editor">
+              <div class="te-header" onclick="toggleTickerEditor()">
+                <span class="te-header-left">📋 Mi lista de tickers (<span id="te-count">0</span>)</span>
+                <span class="te-header-right" id="te-toggle-lbl">Editar ▼</span>
+              </div>
+              <div class="te-body" id="te-body">
+                <div class="te-tags" id="te-tags"></div>
+                <div class="te-add-row">
+                  <input class="te-input" id="te-input" placeholder="Agregar ticker..." maxlength="10"
+                    oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'')"
+                    onkeydown="if(event.key==='Enter')addScanTicker()">
+                  <button class="te-add-btn" onclick="addScanTicker()">+ Agregar</button>
+                </div>
+                <div class="te-legend">
+                  <div class="te-leg-item"><div class="te-leg-dot" style="background:var(--gold-text)"></div>Favorito (toca 2x)</div>
+                  <div class="te-leg-item"><div class="te-leg-dot" style="background:var(--green-text)"></div>Ganador en tu historial</div>
+                  <div class="te-leg-item"><div class="te-leg-dot" style="background:var(--t3)"></div>Lista base</div>
+                </div>
+                <div style="margin-top:10px;display:flex;gap:8px">
+                  <button onclick="resetTickerList()" style="font-size:11px;color:var(--t3);background:none;border:none;cursor:pointer">Restaurar lista default</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Scanner controls -->
             <div class="scanner-controls">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
                 <div>
-                  <div style="font-size:13px;font-weight:600;color:var(--t1)">Filtros activos</div>
-                  <div style="font-size:11px;color:var(--t3);margin-top:2px">Precio $5–$100 · Volumen inusual · Alta volatilidad</div>
+                  <div style="font-size:13px;font-weight:600;color:var(--t1)">Filtros</div>
+                  <div style="font-size:11px;color:var(--t3);margin-top:2px" id="scan-filter-desc">Precio $5–$100 · Volumen inusual · Fibonacci</div>
                 </div>
                 <button class="scanner-refresh-btn" id="scanner-btn" onclick="runScanner()">Buscar</button>
               </div>
               <div class="scanner-filter-row">
-                <div class="filter-chip active" id="sf-all" onclick="setScanFilter('all',this)">Todos</div>
-                <div class="filter-chip" id="sf-hot" onclick="setScanFilter('hot',this)">🔴 Hot</div>
-                <div class="filter-chip" id="sf-fib" onclick="setScanFilter('fib',this)">📐 Fib zone</div>
-                <div class="filter-chip" id="sf-vol" onclick="setScanFilter('vol',this)">📊 Vol. alto</div>
+                <div class="filter-chip active" id="sf-all"     onclick="setScanFilter('all',this)">Todos</div>
+                <div class="filter-chip"        id="sf-fav"     onclick="setScanFilter('fav',this)">⭐ Favoritos</div>
+                <div class="filter-chip"        id="sf-hot"     onclick="setScanFilter('hot',this)">🔴 Hot</div>
+                <div class="filter-chip"        id="sf-fib"     onclick="setScanFilter('fib',this)">📐 Fib zone</div>
+                <div class="filter-chip"        id="sf-vol"     onclick="setScanFilter('vol',this)">📊 Vol. alto</div>
+                <div class="filter-chip"        id="sf-hist"    onclick="setScanFilter('hist',this)">🏆 Historial</div>
               </div>
             </div>
+
+            <!-- Results -->
             <div id="scanner-results">
               <div style="text-align:center;padding:32px 0">
                 <div style="font-size:32px;margin-bottom:10px">🔍</div>
@@ -1495,6 +1571,16 @@
                 <div style="font-size:12px;color:var(--t3);margin-top:6px">Toca "Buscar" para encontrar<br>smallcaps con setup activo</div>
               </div>
             </div>
+
+            <!-- Scan history -->
+            <div id="scan-history-section" style="margin-top:16px;display:none">
+              <div class="section-label" style="display:flex;justify-content:space-between">
+                <span>Historial del scanner</span>
+                <span onclick="clearScanHistory()" style="color:var(--t3);cursor:pointer;font-size:11px">Limpiar</span>
+              </div>
+              <div id="scan-history-list" style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:2px 14px"></div>
+            </div>
+
           </div>
         </div>
 
@@ -3702,14 +3788,446 @@ const EDU_EVENTS = [
 // ── SCANNER ENGINE — REAL DATA via Yahoo Finance ──
 
 // 40 smallcaps with high volatility history — $5-$100 range
-var SCAN_TICKERS = [
-  'SOFI','PLUG','RIVN','MARA','IONQ','ASTS','UPST','AFRM','CLSK','HIMS',
-  'NVAX','CRSP','BBAI','CELH','BLNK','CHPT','SAVA','CLOV','DNA','WKHS',
-  'SPCE','RXRX','SNDL','NIO','XPEV','LCID','HOOD','COIN','PLTR','GRAB',
-  'JOBY','ACHR','MTTR','PSFE','RIOT','CENN','MULN','ATER','FFIE','MVIS',
+// ════════════════════════════════════════════
+// SCANNER ENGINE v2 — Editable list + Pre-market + History
+// ════════════════════════════════════════════
+
+const SCAN_TICKERS_DEFAULT = [
+  'SOFI','MARA','IONQ','ASTS','UPST','AFRM','CLSK','HIMS',
+  'NVAX','CRSP','BBAI','CELH','BLNK','HOOD','COIN','PLTR',
+  'RIVN','NIO','JOBY','ACHR','RXRX','SNDL','XPEV','GRAB',
+  'RIOT','MVIS','CHPT','PSFE','SAVA','CLOV',
 ];
 
-// CORS proxy cascade — tries each in order until one works
+const SCAN_TICKERS_KEY  = 'tradeos_scan_tickers';
+const SCAN_FAV_KEY      = 'tradeos_scan_favs';
+const SCAN_HISTORY_KEY  = 'tradeos_scan_history';
+
+// Load user's custom ticker list or fall back to default
+function loadScanTickers() {
+  try {
+    var saved = JSON.parse(localStorage.getItem(SCAN_TICKERS_KEY));
+    return (saved && saved.length) ? saved : SCAN_TICKERS_DEFAULT.slice();
+  } catch(e) { return SCAN_TICKERS_DEFAULT.slice(); }
+}
+function saveScanTickers(arr) {
+  try { localStorage.setItem(SCAN_TICKERS_KEY, JSON.stringify(arr)); } catch(e) {}
+}
+function loadScanFavs() {
+  try { return JSON.parse(localStorage.getItem(SCAN_FAV_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveScanFavs(arr) {
+  try { localStorage.setItem(SCAN_FAV_KEY, JSON.stringify(arr)); } catch(e) {}
+}
+function loadScanHistory() {
+  try { return JSON.parse(localStorage.getItem(SCAN_HISTORY_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveScanHistory(arr) {
+  try { localStorage.setItem(SCAN_HISTORY_KEY, JSON.stringify(arr.slice(0,50))); } catch(e) {}
+}
+
+STATE.scanTickers = loadScanTickers();
+STATE.scanFavs    = loadScanFavs();
+STATE.scanHistory = loadScanHistory();
+STATE.scanFilter  = 'all';
+STATE.scanResults = [];
+STATE.teOpen      = false;
+
+// ── Get tickers from historial that won ──
+function getHistorialWinners() {
+  var trades = (STATE.trades || []).filter(function(t){ return t.instrument === 'Smallcap' && t.result === 'win' && t.ticker; });
+  var counts = {};
+  trades.forEach(function(t) {
+    var sym = t.ticker.toUpperCase();
+    counts[sym] = (counts[sym] || 0) + 1;
+  });
+  return counts;
+}
+
+// ── Get full stats for a specific ticker from diary ──
+function getTickerStats(ticker) {
+  var trades = (STATE.trades || []).filter(function(t){
+    return t.instrument === 'Smallcap' && t.ticker && t.ticker.toUpperCase() === ticker.toUpperCase();
+  });
+  if (!trades.length) return null;
+  var wins  = trades.filter(function(t){ return t.result === 'win'; });
+  var pl    = trades.reduce(function(s,t){ return s + (t.result==='win' ? t.amount : -t.amount); }, 0);
+  var avgW  = wins.length ? wins.reduce(function(s,t){ return s+t.amount; },0)/wins.length : 0;
+  var last  = trades.sort(function(a,b){ return new Date(b.date)-new Date(a.date); })[0];
+  return {
+    total:   trades.length,
+    wins:    wins.length,
+    losses:  trades.length - wins.length,
+    winrate: Math.round(wins.length / trades.length * 100),
+    pl:      pl,
+    avgWin:  avgW,
+    lastDate: last ? new Date(last.date).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'2-digit'}) : null
+  };
+}
+
+// ── Auto-suggest tickers from diary not in current list ──
+function autoSuggestFromHistory() {
+  var winners = getHistorialWinners();
+  var missing = Object.keys(winners).filter(function(sym){
+    return STATE.scanTickers.indexOf(sym) < 0 && winners[sym] >= 1;
+  });
+  if (!missing.length) return;
+
+  var el = document.getElementById('te-suggestions');
+  if (!el) return;
+  el.innerHTML = '<div style="margin-top:10px;padding-top:10px;border-top:0.5px dashed var(--border)">'
+    + '<div style="font-size:11px;font-weight:700;color:var(--gold-text);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:7px">💡 De tu historial — no están en la lista</div>'
+    + missing.slice(0,6).map(function(sym) {
+      var st = getTickerStats(sym);
+      return '<button onclick="quickAddFromHistory(&quot;'+sym+'&quot;)" style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;background:var(--gold-bg);border:0.5px solid var(--gold);border-radius:20px;color:var(--gold-text);font-size:12px;font-weight:600;cursor:pointer;margin:3px">'
+        + '+ ' + sym
+        + (st ? ' <span style="font-size:10px;color:var(--t3)">'+st.wins+'W/'+st.losses+'L</span>' : '')
+        + '</button>';
+    }).join('')
+    + '</div>';
+  el.style.display = '';
+}
+
+function quickAddFromHistory(ticker) {
+  if (STATE.scanTickers.indexOf(ticker) >= 0) { showToast(ticker + ' ya está'); return; }
+  STATE.scanTickers.unshift(ticker);
+  // Auto-mark as fav if won 2+ times
+  var winners = getHistorialWinners();
+  if ((winners[ticker] || 0) >= 2 && STATE.scanFavs.indexOf(ticker) < 0) {
+    STATE.scanFavs.unshift(ticker);
+    saveScanFavs(STATE.scanFavs);
+  }
+  saveScanTickers(STATE.scanTickers);
+  renderTickerEditor();
+  showToast('✅ ' + ticker + ' agregado' + ((winners[ticker]||0)>=2?' y marcado favorito':''), true);
+}
+
+// ── Show ticker detail modal ──
+function showTickerStats(ticker) {
+  var st = getTickerStats(ticker);
+  if (!st) { showToast('Sin operaciones de ' + ticker + ' en tu diario'); return; }
+  var plColor = st.pl >= 0 ? 'var(--green-text)' : 'var(--red-text)';
+  var plSign  = st.pl >= 0 ? '+' : '';
+  var detailEl = document.getElementById('detail-body');
+  var detailTitle = document.getElementById('detail-title');
+  var sheet = document.getElementById('detail-sheet');
+  var overlay = document.getElementById('detail-overlay');
+  if (!detailEl || !sheet) { showToast(ticker + ': ' + st.wins + 'G/' + st.losses + 'P · WR ' + st.winrate + '% · P&L $' + st.pl.toFixed(0)); return; }
+  detailTitle.textContent = '📊 ' + ticker + ' — Historial personal';
+  detailEl.innerHTML =
+    '<div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px">'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">'
+    + '<div style="text-align:center;background:var(--bg3);border-radius:var(--radius-sm);padding:12px">'
+    + '<div style="font-size:28px;font-weight:700;color:'+plColor+'">'+plSign+'$'+Math.abs(st.pl).toFixed(0)+'</div>'
+    + '<div style="font-size:10px;color:var(--t3);text-transform:uppercase;margin-top:3px">P&L Total</div>'
+    + '</div>'
+    + '<div style="text-align:center;background:var(--bg3);border-radius:var(--radius-sm);padding:12px">'
+    + '<div style="font-size:28px;font-weight:700;color:'+(st.winrate>=50?'var(--green-text)':'var(--red-text)')+'">'+st.winrate+'%</div>'
+    + '<div style="font-size:10px;color:var(--t3);text-transform:uppercase;margin-top:3px">Winrate</div>'
+    + '</div></div>'
+    + '<div class="detail-row"><span class="detail-label">Operaciones totales</span><span class="detail-val">'+st.total+'</span></div>'
+    + '<div class="detail-row"><span class="detail-label">Ganadoras / Perdedoras</span><span class="detail-val" style="color:var(--green-text)">'+st.wins+'</span><span class="detail-val" style="color:var(--red-text);margin-left:4px"> / '+st.losses+'</span></div>'
+    + '<div class="detail-row"><span class="detail-label">Promedio de ganancia</span><span class="detail-val" style="color:var(--green-text)">$'+st.avgWin.toFixed(2)+'</span></div>'
+    + '<div class="detail-row"><span class="detail-label">Última operación</span><span class="detail-val">'+st.lastDate+'</span></div>'
+    + '</div>'
+    + (STATE.scanFavs.indexOf(ticker) < 0
+      ? '<button onclick="toggleFav(&quot;'+ticker+'&quot;);closeDetail()" style="width:100%;padding:12px;background:var(--gold-bg);border:0.5px solid var(--gold);border-radius:var(--radius);color:var(--gold-text);font-size:13px;font-weight:700;cursor:pointer">⭐ Marcar como favorito</button>'
+      : '<button onclick="toggleFav(&quot;'+ticker+'&quot;);closeDetail()" style="width:100%;padding:12px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);color:var(--t3);font-size:13px;font-weight:600;cursor:pointer">Quitar de favoritos</button>');
+  sheet.classList.add('open');
+  overlay.classList.add('open');
+}
+
+// ── Validate ticker with Yahoo Finance before adding ──
+async function validateAndAddTicker() {
+  var inp = document.getElementById('te-input');
+  var val = inp ? inp.value.trim().toUpperCase().replace(/[^A-Z]/g,'') : '';
+  if (!val || val.length < 1 || val.length > 8) { showToast('Ticker inválido'); return; }
+  if (STATE.scanTickers.indexOf(val) >= 0) { showToast(val + ' ya está en la lista'); return; }
+
+  // Show loading state in button
+  var btn = document.querySelector('.te-add-btn');
+  if (btn) { btn.textContent = '...'; btn.disabled = true; }
+
+  try {
+    var url  = 'https://query1.finance.yahoo.com/v8/finance/chart/' + val + '?interval=1d&range=1d';
+    var data = await scanFetch(url);
+    var meta = data && data.chart && data.chart.result && data.chart.result[0] && data.chart.result[0].meta;
+
+    if (!meta || !meta.regularMarketPrice) {
+      showToast('❌ ' + val + ' no encontrado en Yahoo Finance');
+      if (btn) { btn.textContent = '+ Agregar'; btn.disabled = false; }
+      return;
+    }
+
+    var price = meta.regularMarketPrice;
+    var name  = meta.shortName || val;
+
+    if (price < 1 || price > 200) {
+      // Still add it but warn
+      showToast('⚠️ ' + val + ' está fuera del rango $5-$100 (precio: $' + price.toFixed(2) + ')', false);
+    }
+
+    STATE.scanTickers.unshift(val);
+    saveScanTickers(STATE.scanTickers);
+    if (inp) inp.value = '';
+    renderTickerEditor();
+    showToast('✅ ' + val + ' verificado y agregado · $' + price.toFixed(2), true);
+
+  } catch(e) {
+    // If validation fails (offline/proxy error), add anyway with a warning
+    STATE.scanTickers.unshift(val);
+    saveScanTickers(STATE.scanTickers);
+    if (inp) inp.value = '';
+    renderTickerEditor();
+    showToast(val + ' agregado (sin verificar — sin conexión)', true);
+  }
+
+  if (btn) { btn.textContent = '+ Agregar'; btn.disabled = false; }
+}
+
+// ── Ticker Editor — upgraded render ──
+function toggleTickerEditor() {
+  STATE.teOpen = !STATE.teOpen;
+  var body = document.getElementById('te-body');
+  var lbl  = document.getElementById('te-toggle-lbl');
+  if (body) body.className = 'te-body' + (STATE.teOpen ? ' open' : '');
+  if (lbl)  lbl.textContent = STATE.teOpen ? 'Cerrar ▲' : 'Editar ▼';
+  if (STATE.teOpen) renderTickerEditor();
+}
+
+function renderTickerEditor() {
+  var tagsEl  = document.getElementById('te-tags');
+  var countEl = document.getElementById('te-count');
+  if (!tagsEl) return;
+
+  var tickers = STATE.scanTickers;
+  var favs    = STATE.scanFavs;
+  var winners = getHistorialWinners();
+
+  if (countEl) countEl.textContent = tickers.length;
+
+  // Sort: favs first, then winners, then rest
+  var sorted = tickers.slice().sort(function(a, b) {
+    var aScore = (favs.indexOf(a)>=0?100:0) + ((winners[a]||0)*10);
+    var bScore = (favs.indexOf(b)>=0?100:0) + ((winners[b]||0)*10);
+    return bScore - aScore;
+  });
+
+  tagsEl.innerHTML = sorted.map(function(t) {
+    var isFav = favs.indexOf(t) >= 0;
+    var wCount = winners[t] || 0;
+    var isWin  = wCount > 0;
+    var st     = getTickerStats(t);
+    var cls    = isFav ? 'te-tag fav' : isWin ? 'te-tag hist' : 'te-tag';
+    var prefix = isFav ? '⭐ ' : isWin ? '🏆 ' : '';
+    var suffix = st ? (' <span style="font-size:9px;opacity:0.7">'+st.winrate+'%</span>') : '';
+    var tooltip= st
+      ? t + ': '+st.wins+'G/'+st.losses+'P · WR '+st.winrate+'% · $'+st.pl.toFixed(0)
+      : 'Toca para ver estadísticas · Doble toque para favorito';
+    return '<div class="'+cls+'" title="'+tooltip+'"'
+      + ' onclick="showTickerStats(&quot;'+t+'&quot;)"'
+      + ' ondblclick="event.stopPropagation();toggleFav(&quot;'+t+'&quot;)">'
+      + prefix + t + suffix
+      + '<button class="te-tag-del" onclick="event.stopPropagation();removeScanTicker(&quot;'+t+'&quot;)" title="Eliminar">×</button>'
+      + '</div>';
+  }).join('');
+
+  // Auto-suggest from history
+  autoSuggestFromHistory();
+}
+
+function addScanTicker() {
+  // Delegates to async validator
+  validateAndAddTicker();
+}
+
+function removeScanTicker(ticker) {
+  STATE.scanTickers = STATE.scanTickers.filter(function(t){ return t !== ticker; });
+  STATE.scanFavs    = STATE.scanFavs.filter(function(t){ return t !== ticker; });
+  saveScanTickers(STATE.scanTickers);
+  saveScanFavs(STATE.scanFavs);
+  renderTickerEditor();
+  showToast(ticker + ' eliminado de la lista');
+}
+
+function toggleFav(ticker) {
+  var idx = STATE.scanFavs.indexOf(ticker);
+  if (idx >= 0) STATE.scanFavs.splice(idx, 1);
+  else STATE.scanFavs.unshift(ticker);
+  saveScanFavs(STATE.scanFavs);
+  renderTickerEditor();
+  showToast(idx >= 0 ? ticker + ' quitado de favoritos' : '⭐ ' + ticker + ' marcado como favorito', true);
+}
+
+function resetTickerList() {
+  if (!confirm('Restaurar la lista de tickers al default original?')) return;
+  STATE.scanTickers = SCAN_TICKERS_DEFAULT.slice();
+  STATE.scanFavs    = [];
+  saveScanTickers(STATE.scanTickers);
+  saveScanFavs(STATE.scanFavs);
+  renderTickerEditor();
+  showToast('Lista restaurada al default');
+}
+
+
+// ── Session / Pre-market detection (PT timezone) ──
+function getSessionInfo() {
+  var now    = new Date();
+  // Convert to PT (UTC-7 PDT / UTC-8 PST)
+  var ptOff  = isDST(now) ? -7 : -8;
+  var utc    = now.getTime() + now.getTimezoneOffset() * 60000;
+  var pt     = new Date(utc + ptOff * 3600000);
+  var h      = pt.getHours();
+  var m      = pt.getMinutes();
+  var hm     = h + m / 60;
+  var dow    = pt.getDay(); // 0=Sun, 6=Sat
+  var isWeekday = dow >= 1 && dow <= 5;
+
+  if (!isWeekday) return { type:'closed', title:'Mercado cerrado (fin de semana)', sub:'El scanner muestra datos del último día hábil', icon:'💤', ptTime: fmtPT(pt) };
+  if (hm >= 1 && hm < 4)   return { type:'closed',   title:'Mercado cerrado',               sub:'Pre-market inicia a las 4:00 AM PT',                    icon:'🌙', ptTime: fmtPT(pt) };
+  if (hm >= 4 && hm < 6.5) return { type:'premarket', title:'🌅 Pre-market activo — Tu ventana óptima', sub:'4:00–9:30 AM PT · Confluencia Londres/NY · Escanea gaps', icon:'🌅', ptTime: fmtPT(pt) };
+  if (hm >= 6.5 && hm < 9.5) return { type:'premarket', title:'🌅 Pre-market tardío / Apertura cercana', sub:'9:30 AM PT = apertura NYSE · Espera 1h post-apertura para smallcaps', icon:'⏰', ptTime: fmtPT(pt) };
+  if (hm >= 9.5 && hm < 10.5) return { type:'open', title:'⚠️ Manipulación de apertura', sub:'Espera ~1 hora post-apertura antes de buscar setups en smallcaps', icon:'⚠️', ptTime: fmtPT(pt) };
+  if (hm >= 10.5 && hm < 16) return { type:'open', title:'✅ Mercado abierto', sub:'Horario regular NYSE · Setups válidos para smallcaps', icon:'📈', ptTime: fmtPT(pt) };
+  if (hm >= 16 && hm < 20)  return { type:'after',   title:'After-hours activo',            sub:'Volumen reducido · Análisis vespertino para mañana',     icon:'🌆', ptTime: fmtPT(pt) };
+  return { type:'closed', title:'Mercado cerrado', sub:'Pre-market inicia a las 4:00 AM PT', icon:'🌙', ptTime: fmtPT(pt) };
+}
+
+function isDST(d) {
+  var jan = new Date(d.getFullYear(), 0, 1).getTimezoneOffset();
+  var jul = new Date(d.getFullYear(), 6, 1).getTimezoneOffset();
+  return d.getTimezoneOffset() < Math.max(jan, jul);
+}
+
+function fmtPT(d) {
+  return d.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit', hour12:true }) + ' PT';
+}
+
+function updateSessionBanner() {
+  var info   = getSessionInfo();
+  var banner = document.getElementById('scan-session-banner');
+  var icon   = document.getElementById('scan-pm-icon');
+  var title  = document.getElementById('scan-pm-title');
+  var sub    = document.getElementById('scan-pm-sub');
+  if (!banner) return;
+  var clsMap = { premarket:'preopen', open:'preopen', after:'closed', closed:'closed' };
+  banner.className = 'pm-banner ' + (clsMap[info.type] || 'closed');
+  if (icon)  icon.textContent  = info.icon;
+  if (title) title.textContent = info.title + '  (' + info.ptTime + ')';
+  if (sub)   sub.textContent   = info.sub;
+}
+
+// ── Fib compatibility score ──
+// ════════════════════════════════════════════
+// MEJORA 3 — ANÁLISIS FIBONACCI COMPLETO
+// Calcula los niveles exactos de tu estrategia
+// A = swing low, B = swing high, C = zona dorada 0.618
+// Objetivo = extensión -0.618 (donde proyectas el TP)
+// ════════════════════════════════════════════
+
+function fibAnalysis(price, low, high, prevClose) {
+  if (!low || !high || high <= low) return null;
+  var range = high - low;
+
+  // ── Niveles clave de tu estrategia ──
+  var levels = {
+    pointA:    low,                          // Swing low (punto A)
+    pointB:    high,                         // Swing high (punto B)
+    fib786:    high - range * 0.786,         // 0.786 (zona de sobre-extensión)
+    fib618:    high - range * 0.618,         // 0.618 — TU ZONA DORADA (punto C ideal)
+    fib500:    high - range * 0.5,           // 0.5   — límite superior zona dorada
+    fib382:    high - range * 0.382,         // 0.382 — retroceso moderado
+    negFib618: high + range * 0.618,         // Extensión -0.618 (TU OBJETIVO)
+    negFib100: high + range * 1.0,           // Extensión -1.0 (objetivo agresivo)
+  };
+
+  // ── Distancias del precio actual a niveles clave ──
+  var distToC   = price - levels.fib618;     // positivo = precio sobre la zona
+  var distToTP  = levels.negFib618 - price;  // distancia al objetivo
+  var rangePct  = (range / price) * 100;     // rango del día como % del precio
+
+  // ── Determinar el estado del setup ──
+  var inGoldenZone = price >= levels.fib618 * 0.985 && price <= levels.fib500 * 1.015;
+  var nearZone     = price >= levels.fib786 * 0.99  && price <= levels.fib382 * 1.01;
+  var aboveB       = price >= levels.pointB * 0.995; // precio cerca o sobre el máximo
+  var hasRange     = rangePct >= 4;  // rango mínimo para que valga la pena
+  var rr           = distToTP > 0 && (price - levels.fib618) > 0
+                     ? (distToTP / (price - levels.fib618)).toFixed(1)
+                     : null;
+
+  // ── Score 0–10 para clasificación ──
+  var score = 0;
+  if (hasRange)        score += 2;
+  if (nearZone)        score += 2;
+  if (inGoldenZone)    score += 4;
+  if (rr && parseFloat(rr) >= 2) score += 2;
+
+  // ── Evaluación narrativa de cada paso de tu estrategia ──
+  var steps = [
+    {
+      num: 1,
+      label: 'Rango del día suficiente',
+      done: hasRange,
+      detail: hasRange
+        ? 'Rango ' + rangePct.toFixed(1) + '% — suficiente para objetivo -0.618'
+        : 'Rango solo ' + rangePct.toFixed(1) + '% — poco espacio para el objetivo'
+    },
+    {
+      num: 2,
+      label: 'Precio en zona de retroceso',
+      done: nearZone || inGoldenZone,
+      detail: inGoldenZone
+        ? 'En zona dorada 0.618–0.5 ✓ — C confirmado'
+        : nearZone
+        ? 'Retroceso iniciado — aún no llega a zona dorada'
+        : aboveB
+        ? 'Precio sobre el máximo — sin retroceso todavía'
+        : 'Precio en ' + (((levels.pointB - price) / range * 100).toFixed(0)) + '% del rango — espera retroceso'
+    },
+    {
+      num: 3,
+      label: 'Punto C en zona dorada (0.618)',
+      done: inGoldenZone,
+      detail: inGoldenZone
+        ? '$' + levels.fib618.toFixed(2) + '–$' + levels.fib500.toFixed(2) + ' — precio en zona ✓'
+        : 'Zona dorada: $' + levels.fib618.toFixed(2) + '–$' + levels.fib500.toFixed(2)
+          + ' · Faltan $' + Math.abs(distToC).toFixed(2)
+    },
+    {
+      num: 4,
+      label: 'Objetivo -0.618 proyectado',
+      done: rr && parseFloat(rr) >= 2,
+      detail: rr
+        ? 'Objetivo $' + levels.negFib618.toFixed(2) + ' · R:R ' + rr + ':1'
+          + (parseFloat(rr) >= 2 ? ' ✓' : ' — necesitas mejor entrada')
+        : 'Define entrada desde zona dorada para calcular R:R'
+    },
+  ];
+
+  return {
+    levels:       levels,
+    score:        score,
+    inGoldenZone: inGoldenZone,
+    nearZone:     nearZone,
+    hasRange:     hasRange,
+    rr:           rr,
+    steps:        steps,
+    rangePct:     rangePct.toFixed(1),
+    // Pre-calculated levels for addScanToCalc
+    entryIdeal:   parseFloat(((levels.fib618 + levels.fib500) / 2).toFixed(2)),
+    slSuggested:  parseFloat((levels.pointA).toFixed(2)),
+    tpSuggested:  parseFloat((levels.negFib618).toFixed(2)),
+  };
+}
+
+// Legacy wrapper for compatibility
+function fibScore(price, low, high) {
+  var a = fibAnalysis(price, low, high);
+  if (!a) return 0;
+  return a.inGoldenZone ? 3 : a.nearZone ? 2 : a.hasRange ? 1 : 0;
+}
+
+// ── CORS proxy cascade ──
 var SCAN_PROXIES = [
   function(u){ return 'https://api.allorigins.win/raw?url='+encodeURIComponent(u); },
   function(u){ return 'https://corsproxy.io/?'+encodeURIComponent(u); },
@@ -3722,138 +4240,139 @@ function scanFetch(url) {
       if (i >= SCAN_PROXIES.length) { reject(new Error('all proxies failed')); return; }
       fetch(SCAN_PROXIES[i](url), { signal: AbortSignal.timeout(7000) })
         .then(function(r) {
-          if (!r.ok) throw new Error('HTTP '+r.status);
+          if (!r.ok) throw new Error('HTTP ' + r.status);
           return r.json();
         })
         .then(resolve)
-        .catch(function() { attempt(i+1); });
+        .catch(function() { attempt(i + 1); });
     }
     attempt(0);
   });
 }
 
 function fetchOneTicker(ticker) {
-  var url = 'https://query1.finance.yahoo.com/v8/finance/chart/'+ticker+'?interval=1d&range=2d';
+  var sess   = getSessionInfo();
+  // Include pre/post market data when in pre-market window
+  var prePost = (sess.type === 'premarket') ? '&includePrePost=true' : '';
+  var url    = 'https://query1.finance.yahoo.com/v8/finance/chart/' + ticker + '?interval=1d&range=2d' + prePost;
+
   return scanFetch(url).then(function(data) {
-    var meta = data && data.chart && data.chart.result && data.chart.result[0] && data.chart.result[0].meta;
+    var res  = data && data.chart && data.chart.result && data.chart.result[0];
+    var meta = res && res.meta;
     if (!meta || !meta.regularMarketPrice) return null;
-    var price  = meta.regularMarketPrice;
-    var prev   = meta.chartPreviousClose || price;
-    var change = parseFloat(((price - prev) / prev * 100).toFixed(2));
-    var high   = meta.regularMarketDayHigh || price;
-    var low    = meta.regularMarketDayLow  || price;
-    var vol    = meta.regularMarketVolume  || 0;
-    var avg    = meta.averageDailyVolume10Day || meta.averageDailyVolume3Month || vol;
-    var rvol   = avg > 0 ? parseFloat((vol / avg).toFixed(2)) : 0;
-    var mktcap = meta.marketCap || 0;
-    // Filter: $5-$100, relVol >= 0.3, exclude if no movement
-    if (price < 5 || price > 100 || rvol < 0.3) return null;
+
+    var price   = meta.regularMarketPrice;
+    var prev    = meta.chartPreviousClose || price;
+    var change  = parseFloat(((price - prev) / prev * 100).toFixed(2));
+    var high    = meta.regularMarketDayHigh  || price;
+    var low     = meta.regularMarketDayLow   || price;
+    var vol     = meta.regularMarketVolume   || 0;
+    var avgVol  = meta.averageDailyVolume10Day || meta.averageDailyVolume3Month || vol;
+    var rvol    = avgVol > 0 ? parseFloat((vol / avgVol).toFixed(2)) : 0;
+    var mktcap  = meta.marketCap || 0;
+
+    // Pre-market specific data
+    var pmPrice  = meta.preMarketPrice  || null;
+    var pmChange = pmPrice ? parseFloat(((pmPrice - prev) / prev * 100).toFixed(2)) : null;
+
+    if (price < 5 || price > 100) return null;
+    if (rvol < 0.3 && !pmPrice)   return null;
+
     var dayRange = high > low ? parseFloat(((high - low) / low * 100).toFixed(1)) : 0;
-    var fibZone  = checkFibZone(price, low, high);
-    var score    = (Math.abs(change) * 0.4) + (dayRange * 0.3) + (Math.min(rvol, 4) * 15 * 0.3);
-    return { symbol: ticker, price: price, change: change, high: high, low: low,
-             volume: vol, rvol: rvol, mktcap: mktcap, dayRange: dayRange, fibZone: fibZone, score: score };
+    var fibA     = fibAnalysis(price, low, high, prev);
+    var fib      = fibA ? fibA.score : 0;
+    var winners  = getHistorialWinners();
+    var isWinner = !!winners[ticker];
+    var isFav    = STATE.scanFavs.indexOf(ticker) >= 0;
+
+    // Score: change + range + volume + fib + bonus for fav/winner
+    var score = (Math.abs(change) * 0.35) + (dayRange * 0.25) + (Math.min(rvol, 4) * 10 * 0.2)
+              + (fib * 8) + (isWinner ? 15 : 0) + (isFav ? 10 : 0)
+              + (pmChange ? Math.abs(pmChange) * 0.5 : 0);
+
+    return {
+      symbol: ticker, price: price, change: change,
+      high: high, low: low, volume: vol, rvol: rvol, mktcap: mktcap,
+      dayRange: dayRange, fibZone: fib >= 3, fibScore: fib, fibData: fibA,
+      pmPrice: pmPrice, pmChange: pmChange,
+      isFav: isFav, isWinner: isWinner, winCount: (winners[ticker] || 0),
+      score: score
+    };
   }).catch(function() { return null; });
 }
 
+// ── MAIN SCANNER ──
 async function runScanner() {
-  const btn = document.getElementById('scanner-btn');
-  const el  = document.getElementById('scanner-results');
+  updateSessionBanner();
+  renderTickerEditor(); // sync count
+
+  var btn  = document.getElementById('scanner-btn');
+  var el   = document.getElementById('scanner-results');
   if (btn) { btn.textContent = 'Escaneando...'; btn.classList.add('loading'); }
-  el.innerHTML = [1,2,3].map(function(){ return '<div class="loading-shimmer" style="height:88px;margin-bottom:8px"></div>'; }).join('');
+  el.innerHTML = [1,2,3].map(function(){
+    return '<div class="loading-shimmer" style="height:88px;margin-bottom:8px"></div>';
+  }).join('');
 
-  var results = [];
-  var total   = SCAN_TICKERS.length;
-  var done    = 0;
-  var apiWorked = false;
+  var tickers    = STATE.scanTickers.slice();
+  // Prioritize favs and winners — scan them first
+  var winners    = getHistorialWinners();
+  tickers.sort(function(a, b) {
+    var aScore = (STATE.scanFavs.indexOf(a) >= 0 ? 100 : 0) + ((winners[a]||0) * 10);
+    var bScore = (STATE.scanFavs.indexOf(b) >= 0 ? 100 : 0) + ((winners[b]||0) * 10);
+    return bScore - aScore;
+  });
 
-  // Fetch in batches of 5 to respect rate limits
+  var results    = [];
+  var total      = tickers.length;
+  var done       = 0;
+  var apiWorked  = false;
+
   for (var i = 0; i < total; i += 5) {
-    var batch = SCAN_TICKERS.slice(i, i + 5);
+    var batch = tickers.slice(i, i + 5);
     var res   = await Promise.all(batch.map(fetchOneTicker));
-    var batchGot = res.filter(function(r){ return r !== null; });
-    if (batchGot.length > 0) apiWorked = true;
-    res.forEach(function(r) { if (r) results.push(r); });
+    res.forEach(function(r) { if (r) { results.push(r); apiWorked = true; } });
     done += batch.length;
-
     var pct = Math.round(done / total * 100);
     el.innerHTML = '<div style="background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center">'
       + '<div style="font-size:13px;color:var(--t2);margin-bottom:10px">Escaneando ' + done + '/' + total + ' · ' + results.length + ' encontrados</div>'
-      + '<div style="background:var(--bg4);border-radius:4px;height:6px;overflow:hidden"><div style="height:100%;background:var(--gold);border-radius:4px;width:' + pct + '%;transition:width 0.3s"></div></div>'
+      + '<div style="background:var(--bg4);border-radius:4px;height:6px;overflow:hidden">'
+      + '<div style="height:100%;background:var(--gold);border-radius:4px;width:' + pct + '%;transition:width 0.3s"></div></div>'
       + '</div>';
-
-    // If we already have 8+ results and API is working, stop early
     if (results.length >= 10 && apiWorked) break;
   }
 
-  // If API returned nothing (all proxies failed), use varied demo data
   if (!apiWorked || results.length === 0) {
     results = generateDemoScanResults();
-    var statusEl = document.getElementById('p4-status');
-    if (statusEl) statusEl.textContent = 'Modo demo — mercado cerrado o sin conexión';
+    var st = document.getElementById('p4-status');
+    if (st) st.textContent = 'Modo demo · mercado cerrado o sin conexión';
     if (btn) { btn.textContent = 'Reintentar'; btn.classList.remove('loading'); }
     STATE.scanResults = results;
     renderScannerResults();
     return;
   }
 
-  // Sort by score desc, take top 8
-  results.sort(function(a,b){ return b.score - a.score; });
+  results.sort(function(a, b) { return b.score - a.score; });
   STATE.scanResults = results.slice(0, 8);
 
+  // Save to scan history
+  var histEntry = {
+    ts:      Date.now(),
+    session: getSessionInfo().type,
+    found:   STATE.scanResults.map(function(r){ return r.symbol; })
+  };
+  STATE.scanHistory.unshift(histEntry);
+  saveScanHistory(STATE.scanHistory);
+
   if (btn) { btn.textContent = 'Actualizar'; btn.classList.remove('loading'); }
-  var timeStr = new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
-  var statusEl = document.getElementById('p4-status');
-  if (statusEl) statusEl.textContent = results.length + ' encontrados · datos reales · ' + timeStr;
+  var ts  = new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  var st  = document.getElementById('p4-status');
+  if (st) st.textContent = results.length + ' encontrados · datos reales · ' + ts;
+
   renderScannerResults();
+  renderScanHistory();
 }
 
-// Demo data with variation based on time-of-day so it doesn't look static
-function generateDemoScanResults() {
-  var h = new Date().getHours();
-  var m = new Date().getMinutes();
-  var seed = h * 60 + m; // changes every minute
-
-  var pool = [
-    { symbol:'IONQ',  basePrice:18.42, baseChange:8.3  },
-    { symbol:'MARA',  basePrice:22.15, baseChange:5.7  },
-    { symbol:'HOOD',  basePrice:19.88, baseChange:-4.2 },
-    { symbol:'SOFI',  basePrice:8.34,  baseChange:3.1  },
-    { symbol:'COIN',  basePrice:68.50, baseChange:2.8  },
-    { symbol:'PLTR',  basePrice:24.30, baseChange:1.9  },
-    { symbol:'RIVN',  basePrice:12.60, baseChange:-3.4 },
-    { symbol:'UPST',  basePrice:29.80, baseChange:6.1  },
-    { symbol:'AFRM',  basePrice:42.50, baseChange:-2.8 },
-    { symbol:'HIMS',  basePrice:16.20, baseChange:4.5  },
-    { symbol:'ASTS',  basePrice:25.10, baseChange:9.2  },
-    { symbol:'CLSK',  basePrice:14.80, baseChange:-5.1 },
-  ];
-
-  // Shuffle deterministically based on seed (so it rotates through the day)
-  pool.sort(function(a, b) {
-    return ((a.symbol.charCodeAt(0) * seed) % 97) - ((b.symbol.charCodeAt(0) * seed) % 97);
-  });
-
-  return pool.slice(0, 6).map(function(s) {
-    // Add small variation based on minutes
-    var variation = ((seed % 10) - 5) * 0.1;
-    var price  = parseFloat((s.basePrice * (1 + variation * 0.01)).toFixed(2));
-    var change = parseFloat((s.baseChange + variation).toFixed(2));
-    var high   = parseFloat((price * 1.04).toFixed(2));
-    var low    = parseFloat((price * 0.96).toFixed(2));
-    var rvol   = parseFloat((1.5 + Math.abs(change) * 0.2).toFixed(2));
-    var dayRange = parseFloat(((high - low) / low * 100).toFixed(1));
-    var fibZone  = checkFibZone(price, low, high);
-    var score    = (Math.abs(change) * 0.4) + (dayRange * 0.3) + (Math.min(rvol, 4) * 15 * 0.3);
-    return {
-      symbol: s.symbol, price: price, change: change,
-      high: high, low: low, volume: Math.floor(2000000 + seed * 50000),
-      rvol: rvol, mktcap: price * 500000000, dayRange: dayRange, fibZone: fibZone, score: score,
-      isDemo: true
-    };
-  }).sort(function(a,b){ return b.score - a.score; });
-}
-
+// ── RENDER RESULTS ──
 function setScanFilter(f, el) {
   STATE.scanFilter = f;
   document.querySelectorAll('.scanner-filter-row .filter-chip').forEach(function(c){ c.classList.remove('active'); });
@@ -3862,29 +4381,33 @@ function setScanFilter(f, el) {
 }
 
 function checkFibZone(price, low, high) {
-  if (!low || !high || high <= low) return false;
-  var range  = high - low;
-  var fib618 = high - range * 0.618;
-  var fib500 = high - range * 0.5;
-  return price >= fib618 * 0.98 && price <= fib500 * 1.02;
+  return fibScore(price, low, high) >= 3;
 }
 
-function fmtVol(v){ return v>=1e9?(v/1e9).toFixed(1)+'B':v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':String(v||0); }
-function fmtCap(v){ return v>=1e12?'$'+(v/1e12).toFixed(1)+'T':v>=1e9?'$'+(v/1e9).toFixed(1)+'B':v>=1e6?'$'+(v/1e6).toFixed(0)+'M':'—'; }
+function fmtVol(v){
+  return v>=1e9?(v/1e9).toFixed(1)+'B':v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'K':String(v||0);
+}
+function fmtCap(v){
+  return v>=1e12?'$'+(v/1e12).toFixed(1)+'T':v>=1e9?'$'+(v/1e9).toFixed(1)+'B':v>=1e6?'$'+(v/1e6).toFixed(0)+'M':'—';
+}
 
 function renderScannerResults() {
-  var el = document.getElementById('scanner-results');
+  var el   = document.getElementById('scanner-results');
   if (!el) return;
+
   var data = STATE.scanResults.slice();
-  if (STATE.scanFilter === 'hot')  data = data.filter(function(d){ return Math.abs(d.change) >= 4; });
-  if (STATE.scanFilter === 'fib')  data = data.filter(function(d){ return d.fibZone; });
-  if (STATE.scanFilter === 'vol')  data = data.filter(function(d){ return d.rvol >= 2; });
+  var f    = STATE.scanFilter;
+  if (f === 'fav')  data = data.filter(function(d){ return d.isFav; });
+  if (f === 'hot')  data = data.filter(function(d){ return Math.abs(d.change) >= 4; });
+  if (f === 'fib')  data = data.filter(function(d){ return d.fibZone; });
+  if (f === 'vol')  data = data.filter(function(d){ return d.rvol >= 2; });
+  if (f === 'hist') data = data.filter(function(d){ return d.isWinner; });
 
   if (!data.length && STATE.scanResults.length === 0) {
     el.innerHTML = '<div style="text-align:center;padding:32px 0">'
       + '<div style="font-size:32px;margin-bottom:10px">🔍</div>'
       + '<div style="font-size:14px;font-weight:600;color:var(--t2)">Listo para escanear</div>'
-      + '<div style="font-size:12px;color:var(--t3);margin-top:6px">Toca "Buscar" para datos reales<br>via Yahoo Finance</div>'
+      + '<div style="font-size:12px;color:var(--t3);margin-top:6px">Toca "Buscar" para encontrar<br>smallcaps con setup activo</div>'
       + '</div>';
     return;
   }
@@ -3894,52 +4417,73 @@ function renderScannerResults() {
   }
 
   el.innerHTML = data.map(function(d) {
-    var up    = d.change >= 0;
-    var cc    = up ? 'var(--green-text)' : 'var(--red-text)';
-    var cs    = up ? '+' : '';
-    var isHot = Math.abs(d.change) >= 4;
-    var isWarm= Math.abs(d.change) >= 2 && !isHot;
-    var cardCls = isHot ? 'hot' : isWarm ? 'warm' : '';
-    var rvol    = parseFloat(d.rvol)||0;
-    var rvolColor = rvol >= 3 ? 'var(--red-text)' : rvol >= 1.5 ? 'var(--gold-text)' : 'var(--green-text)';
-    var rvolPct   = Math.min(rvol/5*100, 100);
-    // Signal label
-    var sig='', sigColor='var(--t3)', sigBg='var(--bg3)';
-    if (d.change > 3 && rvol >= 1)        { sig='▲ LONG'; sigColor='var(--green-text)'; sigBg='#0d2019'; }
-    else if (d.change < -3 && rvol >= 1)  { sig='▼ SHORT'; sigColor='var(--red-text)'; sigBg='#200d0d'; }
-    else if (rvol >= 1.5)                  { sig='🔥 WATCH'; sigColor='var(--gold-text)'; sigBg='#1a1206'; }
-    else if (d.change > 1)                 { sig='↑ ALERTA'; sigColor='#7aabdf'; sigBg='#0d1a2e'; }
+    var up       = d.change >= 0;
+    var cc       = up ? 'var(--green-text)' : 'var(--red-text)';
+    var cs       = up ? '+' : '';
+    var isHot    = Math.abs(d.change) >= 4;
+    var isWarm   = Math.abs(d.change) >= 2 && !isHot;
+    var cardCls  = isHot ? 'hot' : isWarm ? 'warm' : '';
+    var rvol     = parseFloat(d.rvol) || 0;
+    var rvolC    = rvol >= 3 ? 'var(--red-text)' : rvol >= 1.5 ? 'var(--gold-text)' : 'var(--green-text)';
+    var rvolPct  = Math.min(rvol / 5 * 100, 100);
+
+    // Fib score badge
+    var fibBadge = '';
+    if (d.fibScore >= 3) fibBadge = '<span class="fib-score fib-high">📐 ZONA DORADA</span>';
+    else if (d.fibScore === 2) fibBadge = '<span class="fib-score fib-med">📐 Fib OK</span>';
+    else if (d.fibScore === 1) fibBadge = '<span class="fib-score fib-low">📐 Tiene rango</span>';
+
+    // Signal
+    var sig='', sigC='var(--t3)', sigBg='var(--bg3)';
+    if (d.isFav && d.change > 1)          { sig='⭐ FAV'; sigC='var(--gold-text)'; sigBg='var(--gold-bg)'; }
+    else if (d.isWinner && d.change > 0)  { sig='🏆 ×'+d.winCount; sigC='var(--green-text)'; sigBg='#0d2019'; }
+    else if (d.change > 3 && rvol >= 1)   { sig='▲ LONG'; sigC='var(--green-text)'; sigBg='#0d2019'; }
+    else if (d.change < -3 && rvol >= 1)  { sig='▼ SHORT'; sigC='var(--red-text)'; sigBg='#200d0d'; }
+    else if (rvol >= 1.5)                  { sig='🔥 WATCH'; sigC='var(--gold-text)'; sigBg='var(--gold-bg)'; }
+    else if (d.change > 1)                 { sig='↑ ALERTA'; sigC='#7aabdf'; sigBg='#0d1a2e'; }
     else                                   { sig='— NEUTRAL'; }
+
+    // Pre-market line
+    var pmLine = '';
+    if (d.pmPrice && d.pmChange !== null) {
+      var pmC = d.pmChange >= 0 ? 'var(--green-text)' : 'var(--red-text)';
+      var pmS = d.pmChange >= 0 ? '+' : '';
+      pmLine = '<div style="margin-top:5px;font-size:11px;font-weight:600;color:' + pmC + '">🌅 Pre-market: $' + d.pmPrice.toFixed(2) + ' (' + pmS + d.pmChange.toFixed(2) + '% vs cierre)</div>';
+    }
+
     var badges = [
       d.isDemo ? '<span class="scanner-badge" style="background:var(--bg4);color:var(--t3)">Demo</span>' : '',
       isHot ? '<span class="scanner-badge badge-hot">🔴 HOT</span>' : '',
-      d.fibZone ? '<span class="scanner-badge badge-fib">📐 FIB</span>' : '',
-      rvol >= 2 ? '<span class="scanner-badge badge-vol">📊 '+d.rvol+'x vol</span>' : '',
+      d.isFav ? '<span class="scanner-badge" style="background:var(--gold-bg);color:var(--gold-text);border:0.5px solid var(--gold)">⭐ FAV</span>' : '',
+      d.isWinner ? '<span class="scanner-badge" style="background:#0d2019;color:var(--green-text);border:0.5px solid var(--green2)">🏆 ×'+d.winCount+'</span>' : '',
+      rvol >= 2 ? '<span class="scanner-badge badge-vol">📊 ' + d.rvol + 'x</span>' : '',
     ].filter(Boolean).join(' ');
-    return '<div class="scanner-card ' + cardCls + '" onclick="addScanToCalc(&quot;'+d.symbol+'&quot;,'+d.price+','+d.low+','+d.high+')">'
+
+    return '<div class="scanner-card ' + cardCls + '" onclick="addScanToCalc(&quot;' + d.symbol + '&quot;,' + d.price + ',' + d.low + ',' + d.high + ')">'
       + '<div class="scanner-top">'
       + '<div>'
       + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">'
-      + '<div class="scanner-symbol">'+d.symbol+'</div>'
-      + '<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:'+sigBg+';color:'+sigColor+'">'+sig+'</span>'
+      + '<div class="scanner-symbol">' + d.symbol + '</div>'
+      + '<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:' + sigBg + ';color:' + sigC + '">' + sig + '</span>'
       + '</div>'
       + '<div>' + badges + '</div>'
       + '</div>'
       + '<div style="text-align:right">'
-      + '<div class="scanner-price" style="color:'+cc+'">$'+d.price.toFixed(2)+'</div>'
-      + '<div class="scanner-change" style="color:'+cc+'">'+cs+d.change.toFixed(2)+'%</div>'
+      + '<div class="scanner-price" style="color:' + cc + '">$' + d.price.toFixed(2) + '</div>'
+      + '<div class="scanner-change" style="color:' + cc + '">' + cs + d.change.toFixed(2) + '%</div>'
       + '</div>'
       + '</div>'
+      + (fibBadge ? '<div style="margin-bottom:6px">' + fibBadge + '</div>' : '')
+      + pmLine
       + '<div class="scanner-row">'
-      + '<div class="scanner-stat">Rango <span>'+d.dayRange+'%</span></div>'
-      + '<div class="scanner-stat">H <span>$'+(d.high||0).toFixed(2)+'</span></div>'
-      + '<div class="scanner-stat">L <span>$'+(d.low||0).toFixed(2)+'</span></div>'
-      + '<div class="scanner-stat">Vol <span>'+fmtVol(d.volume)+'</span></div>'
-      + '<div class="scanner-stat">Cap <span>'+fmtCap(d.mktcap)+'</span></div>'
+      + '<div class="scanner-stat">Rango <span>' + d.dayRange + '%</span></div>'
+      + '<div class="scanner-stat">H <span>$' + (d.high||0).toFixed(2) + '</span></div>'
+      + '<div class="scanner-stat">L <span>$' + (d.low||0).toFixed(2) + '</span></div>'
+      + '<div class="scanner-stat">Vol <span>' + fmtVol(d.volume) + '</span></div>'
       + '</div>'
       + '<div class="scanner-vol-bar">'
-      + '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-bottom:3px"><span>Volumen relativo</span><span style="color:'+rvolColor+';font-weight:600">'+d.rvol+'x promedio</span></div>'
-      + '<div class="scanner-vol-track"><div class="scanner-vol-fill" style="width:'+rvolPct+'%;background:'+rvolColor+'"></div></div>'
+      + '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-bottom:3px"><span>Vol relativo</span><span style="color:' + rvolC + ';font-weight:600">' + d.rvol + 'x promedio</span></div>'
+      + '<div class="scanner-vol-track"><div class="scanner-vol-fill" style="width:' + rvolPct + '%;background:' + rvolC + '"></div></div>'
       + '</div>'
       + (d.fibZone
         ? '<div style="font-size:11px;color:var(--green-text);margin-top:7px;font-weight:600">📐 En zona Fibonacci 0.618 — toca para cargar en calculadora</div>'
@@ -3948,43 +4492,111 @@ function renderScannerResults() {
   }).join('');
 }
 
-// ── SCAN TO CALC — carga instrumento en calculadora ──
+// ── DEMO DATA (varied by minute) ──
+function generateDemoScanResults() {
+  var seed = new Date().getHours() * 60 + new Date().getMinutes();
+  var pool = [
+    {symbol:'IONQ', bp:18.42, bc:8.3}, {symbol:'MARA', bp:22.15, bc:5.7},
+    {symbol:'HOOD', bp:19.88, bc:-4.2},{symbol:'SOFI', bp:8.34,  bc:3.1},
+    {symbol:'COIN', bp:68.50, bc:2.8}, {symbol:'PLTR', bp:24.30, bc:1.9},
+    {symbol:'RIVN', bp:12.60, bc:-3.4},{symbol:'UPST', bp:29.80, bc:6.1},
+    {symbol:'AFRM', bp:42.50, bc:-2.8},{symbol:'HIMS', bp:16.20, bc:4.5},
+    {symbol:'ASTS', bp:25.10, bc:9.2}, {symbol:'CLSK', bp:14.80, bc:-5.1},
+  ];
+  pool.sort(function(a,b){ return ((a.symbol.charCodeAt(0)*seed)%97) - ((b.symbol.charCodeAt(0)*seed)%97); });
+  var winners = getHistorialWinners();
+  var favs    = STATE.scanFavs;
+  return pool.slice(0,6).map(function(s) {
+    var v    = ((seed%10)-5)*0.1;
+    var p    = parseFloat((s.bp*(1+v*0.01)).toFixed(2));
+    var ch   = parseFloat((s.bc+v).toFixed(2));
+    var hi   = parseFloat((p*1.04).toFixed(2));
+    var lo   = parseFloat((p*0.96).toFixed(2));
+    var rv   = parseFloat((1.5+Math.abs(ch)*0.2).toFixed(2));
+    var dr   = parseFloat(((hi-lo)/lo*100).toFixed(1));
+    var fs   = fibScore(p, lo, hi);
+    var fa   = fibAnalysis(p, lo, hi, null);
+    var sc   = (Math.abs(ch)*0.35)+(dr*0.25)+(Math.min(rv,4)*10*0.2)+(fs*8)
+             + (winners[s.symbol]?15:0)+(favs.indexOf(s.symbol)>=0?10:0);
+    return { symbol:s.symbol, price:p, change:ch, high:hi, low:lo,
+             volume:Math.floor(2e6+seed*50000), rvol:rv, mktcap:p*5e8,
+             dayRange:dr, fibZone:fs>=3, fibScore:fs, fibData:fa,
+             pmPrice:null, pmChange:null,
+             isFav:favs.indexOf(s.symbol)>=0, isWinner:!!winners[s.symbol],
+             winCount:winners[s.symbol]||0, score:sc, isDemo:true };
+  }).sort(function(a,b){ return b.score-a.score; });
+}
+
+// ── SCAN HISTORY ──
+function renderScanHistory() {
+  var section = document.getElementById('scan-history-section');
+  var list    = document.getElementById('scan-history-list');
+  if (!section || !list || !STATE.scanHistory.length) {
+    if (section) section.style.display = 'none';
+    return;
+  }
+  section.style.display = '';
+  var sessLabel = { premarket:'🌅 Pre-market', open:'📈 Regular', after:'🌆 After-hours', closed:'💤 Cerrado' };
+  list.innerHTML = STATE.scanHistory.slice(0, 5).map(function(h) {
+    var d  = new Date(h.ts);
+    var ds = d.toLocaleDateString('es-MX',{day:'numeric',month:'short'}) + ' ' + d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+    return '<div class="scan-hist-item">'
+      + '<div><div class="shi-sym">' + (h.found||[]).slice(0,5).join(' · ') + '</div>'
+      + '<div class="shi-meta">' + ds + ' · ' + (sessLabel[h.session]||h.session) + '</div></div>'
+      + '<div class="shi-result" style="color:var(--t3)">' + (h.found||[]).length + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function clearScanHistory() {
+  STATE.scanHistory = [];
+  saveScanHistory([]);
+  var section = document.getElementById('scan-history-section');
+  if (section) section.style.display = 'none';
+  showToast('Historial del scanner borrado');
+}
+
+// ── LOAD CALC FROM SCAN ──
 function addScanToCalc(symbol, price, low, high) {
   if (!price || price <= 0) { showToast('Sin datos de precio para ' + symbol); return; }
-
-  // Calcula niveles basados en la estructura del día
   var slDist  = price - low > 0 ? (price - low) * 0.5 : price * 0.02;
   var slPrice = parseFloat((price - slDist).toFixed(2));
   var tpPrice = parseFloat((price + slDist * 2.5).toFixed(2));
-
-  // Navega a calculadora
   switchTab('calc');
-
   setTimeout(function() {
-    // Instrumento
-    var btnSC = document.getElementById('ci-sc');
-    if (btnSC) { btnSC.click(); }
-
-    // Ticker
-    var eEntry  = document.getElementById('calc-entry');
-    var eSl     = document.getElementById('calc-sl');
-    var eTp     = document.getElementById('calc-tp');
-    var eTicker = document.getElementById('ticker-input'); // en el form de registro
-
+    var iSC = document.getElementById('ci-sc');
+    if (iSC) iSC.click();
+    var eEntry = document.getElementById('calc-entry');
+    var eSl    = document.getElementById('calc-sl');
+    var eTp    = document.getElementById('calc-tp');
     if (eEntry) eEntry.value = price.toFixed(2);
     if (eSl)    eSl.value    = slPrice;
     if (eTp)    eTp.value    = tpPrice;
-
-    // Guarda el símbolo en STATE para referencia
     STATE.lastScanSymbol = symbol;
-
-    // Actualiza preview
     calcPreview();
-
-    // Muestra confirmación con los niveles calculados
-    showToast(symbol + ' cargado — Entrada $' + price.toFixed(2) + ' · SL $' + slPrice + ' · TP $' + tpPrice, true);
+    showToast(symbol + ' cargado · SL $' + slPrice + ' · TP $' + tpPrice, true);
   }, 350);
 }
+
+// Auto-update session banner every 60s while scanner tab is open
+setInterval(function() {
+  if (STATE.p4Tab === 'scanner') updateSessionBanner();
+}, 60000);
+
+// Init on tab open
+function initPhase4Tab() {
+  var statusEl = document.getElementById('p4-status');
+  if (statusEl) statusEl.textContent = 'IA & Scanner — listo';
+  STATE.scanTickers = loadScanTickers();
+  STATE.scanFavs    = loadScanFavs();
+  STATE.scanHistory = loadScanHistory();
+  updateSessionBanner();
+  renderTickerEditor();
+  renderScanHistory();
+  var teCount = document.getElementById('te-count');
+  if (teCount) teCount.textContent = STATE.scanTickers.length;
+}
+
 
 // ── WYCKOFF ENGINE ──
 async function runWyckoff() {
@@ -4267,10 +4879,6 @@ function switchP4Tab(tab) {
     if (btn) btn.className = 'p4-subtab' + (t===tab?' active':'');
   });
   if (tab === 'edu') renderEduEvents();
-}
-
-function initPhase4Tab() {
-  document.getElementById('p4-status').textContent = 'Modulos de inteligencia';
 }
 
 function p4Refresh() {
